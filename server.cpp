@@ -15,6 +15,14 @@
 using namespace std;
 
 
+int players[100];
+char games[50][3][3];
+char moves[50][9];
+int game=0;
+int numPlayers=0;
+int MAX=100;
+
+
 void setHints(struct addrinfo *hints)
 {
     bzero(hints, sizeof *hints);
@@ -46,12 +54,6 @@ int setUpServer(){
     return socket_fd;
 }
 
-int players[100];
-char games[50][3][3];
-int game=0;
-int numPlayers=0;
-int MAX=100;
-
 void fillBoard(int gameid){
 //    cout << "Filling board" << endl;
     char c='a';
@@ -79,6 +81,11 @@ void initializeGames(){
     for(int i=0; i<100; i++){
         players[i] = -1;
     }
+    for(int i=0; i<50; i++){
+        for(int j=0; j<9; j++){
+            moves[i][j] = '0';
+        }
+    }
 }
 void initialize(int gameid){
     fillBoard(gameid);
@@ -88,14 +95,14 @@ int checkIfDone(int id, char turn, char playerMark){
     int I = move/3;
     int J = move%3;
     int gameid = id/2;
-    cout <<"checking if done" << endl;
+//    cout <<"checking if done" << endl;
     games[gameid][I][J] = playerMark;    
-    cout << "displaying board in checkIfDone" << endl;
+//    cout << "displaying board in checkIfDone" << endl;
     for(int i=0; i<3; i++){
         if(games[gameid][i][0] == games[gameid][i][1] && games[gameid][i][2] == games[gameid][i][1] )
         {
-            cout << games[gameid][i][0] << " " << games[gameid][i][1] << " " << games[gameid][i][2] << endl;
-            cout << "row matched" << endl; 
+//            cout << games[gameid][i][0] << " " << games[gameid][i][1] << " " << games[gameid][i][2] << endl;
+//            cout << "row matched" << endl; 
             return true;
         }
     }
@@ -123,7 +130,7 @@ int checkTurn(int id, char turn, char playerMark){
     } else {
         //return false;
     }
-    cout << "checking turn checkTurn()" << endl;
+//    cout << "checking turn checkTurn()" << endl;
     if(checkIfDone(id, turn, playerMark) == true){
         char move_rcvd = 'D';
         //char player_mark = '';
@@ -141,6 +148,56 @@ void makeMove(int id, char playermark, char turn){
     int J = move%3;
     int gameid = id/2;
     games[gameid][I][J] = playermark;
+}
+void processMove(int id, char move_rcv, char playerMark){
+    int move = move_rcv - 'a';
+    int I = move/3;
+    int J = move%3;
+    int gameid =id/2;
+    games[gameid][I][J]= playerMark;
+    cout << "moves\t";
+    for(int i=0; i<9; i++){
+        if(moves[gameid][i] == '0'){
+            moves[gameid][i] = move_rcv;
+            break;
+        }
+        cout << moves[gameid][i] << "\t";
+    }
+    cout << endl;
+    for(int i=0; i<3; i++){
+        for(int j=0; j<3; j++){
+            int flag=false;
+            for(int k=0; k<9; k++){
+                if(moves[gameid][k] == '0')
+                    break;
+                if(('a'+(i*3)+j) == moves[gameid][k])
+                    flag = true;
+            }
+            if(flag == true){
+                games[gameid][i][j] = games[gameid][i][j];
+            } else {
+                games[gameid][i][j] = ('a'+(i*3)+j);
+            }
+        }
+    }
+    if(checkIfDone(id, move_rcv, playerMark) == true){
+        cout << "Game over!" << endl;
+        char move_rcvd = 'D';
+        //char player_mark = '';
+        send(gameid*2, &move_rcvd, sizeof move_rcvd, 0);
+        send(gameid*2, &playerMark, sizeof playerMark, 0);
+        send((gameid*2)+1, &move_rcvd, sizeof move_rcvd, 0);
+        send((gameid*2)+1, &playerMark, sizeof playerMark, 0);
+
+   
+    }
+    //make move
+    //games[gameid][I][J] = playerMark;
+
+    //displayBoard(gameid);
+
+    //check if game finished
+
 }
 void startGame(int id1, int id2, int gameid){
     string msg;
@@ -172,7 +229,7 @@ void startGame(int id1, int id2, int gameid){
         char move_rcvd;
         recv(id, &move_rcvd, sizeof move_rcvd, 0);
         cout << "Recieved " << move_rcvd << " from " << id << endl;
-        
+        processMove(id, move_rcvd, playerMark); 
         /*
         if(checkTurn(id, move_rcvd, playerMark )){
             makeMove(id,playerMark, move_rcvd);     

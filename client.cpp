@@ -78,6 +78,8 @@ int main(int argc, char** argv){
             if(move_rcv == 'D'){
                 cout << "Game over :D" << endl;
                 cout << playerMark_rcv << " won!" << endl;
+                close(socket_fd);
+                exit(0);
             }
             
             cout << playerMark_rcv << "'s move: " << endl;
