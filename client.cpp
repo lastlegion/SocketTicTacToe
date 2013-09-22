@@ -54,6 +54,12 @@ void updateBoard(char playerMark, char turn){
     int J = move%3;
     board[I][J] = playerMark;
 }
+bool checkIfDone(char move){
+  if(move == 'D'){
+    return true;
+  }
+  return false;
+}
 int main(int argc, char** argv){
     char* serveraddr = argv[1];
     int socket_fd = connectServer(serveraddr);
@@ -70,28 +76,45 @@ int main(int argc, char** argv){
                 
             //Recieve own move
             char move_rcv;
-            recv(socket_fd, &move_rcv, sizeof move_rcv, 0);
-
             char playerMark_rcv;
-            recv(socket_fd, &playerMark_rcv, sizeof playerMark_rcv, 0);
-            updateBoard(playerMark_rcv, move_rcv);
+            recv(socket_fd, &move_rcv, sizeof move_rcv, 0);
             if(move_rcv == 'D'){
+                recv(socket_fd, &move_rcv, sizeof move_rcv, 0);
+                recv(socket_fd, &playerMark_rcv, sizeof playerMark_rcv, 0);
+                updateBoard(playerMark_rcv, move_rcv);
+                cout << playerMark_rcv << "'s move: " << endl;
+                displayBoard();
                 cout << "Game over :D" << endl;
                 cout << playerMark_rcv << " won!" << endl;
                 close(socket_fd);
                 exit(0);
             }
+            recv(socket_fd, &playerMark_rcv, sizeof playerMark_rcv, 0);
+
             
+            updateBoard(playerMark_rcv, move_rcv);
             cout << playerMark_rcv << "'s move: " << endl;
             displayBoard();
             cout << endl << endl;
             
             //Recieve opponent's move
             recv(socket_fd, &move_rcv, sizeof move_rcv, 0);
+            if(move_rcv == 'D'){
+                recv(socket_fd, &move_rcv, sizeof move_rcv, 0);
+                recv(socket_fd, &playerMark_rcv, sizeof playerMark_rcv, 0);
+                updateBoard(playerMark_rcv, move_rcv);                
+                cout << playerMark_rcv << "'s move" << endl;
+                displayBoard();
+                cout << "Game over :D" << endl;
+                cout << playerMark_rcv << " won!" << endl;
+                close(socket_fd);
+                exit(0);
+            }
             recv(socket_fd, &playerMark_rcv, sizeof playerMark_rcv, 0);
             updateBoard(playerMark_rcv, move_rcv);
             cout << playerMark_rcv << "'s move" << endl;
             displayBoard();
+
         }
        
     }

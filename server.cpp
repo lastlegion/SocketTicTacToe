@@ -182,11 +182,16 @@ void processMove(int id, char move_rcv, char playerMark){
     }
     if(checkIfDone(id, move_rcv, playerMark) == true){
         cout << "Game over!" << endl;
-        char move_rcvd = 'D';
+        char endMark = 'D';
         //char player_mark = '';
-        send(gameid*2, &move_rcvd, sizeof move_rcvd, 0);
+        send(gameid*2, &endMark, sizeof endMark, 0);
+        send(gameid*2, &move_rcv, sizeof move_rcv, 0);
         send(gameid*2, &playerMark, sizeof playerMark, 0);
-        send((gameid*2)+1, &move_rcvd, sizeof move_rcvd, 0);
+//        string mmsg = "game over(server)";
+//        send((gameid*2)+1, mmsg.c_str(), mmsg.length(), 0);
+//        send((gameid*2)+1, mmsg.c_str(), mmsg.length(), 0);
+        send((gameid*2)+1, &endMark, sizeof endMark, 0);
+        send((gameid*2)+1, &move_rcv, sizeof move_rcv, 0);
         send((gameid*2)+1, &playerMark, sizeof playerMark, 0);
 
    
@@ -224,8 +229,10 @@ void startGame(int id1, int id2, int gameid){
             playerMark = 'X';
             id = id2;
         }       
-        msg = msg+ playerMark;
-        send(id, msg.c_str(), MAX, 0);
+        if(numTurns == 0){
+          msg = msg+ playerMark;
+          send(id, msg.c_str(), MAX, 0);
+        }
         char move_rcvd;
         recv(id, &move_rcvd, sizeof move_rcvd, 0);
         cout << "Recieved " << move_rcvd << " from " << id << endl;
@@ -235,11 +242,24 @@ void startGame(int id1, int id2, int gameid){
             makeMove(id,playerMark, move_rcvd);     
         }
         */
-        send(id1, &move_rcvd, sizeof move_rcvd, 0);
-        send(id1, &playerMark, sizeof playerMark, 0);
-        send(id2, &move_rcvd, sizeof move_rcvd, 0);
-        send(id2, &playerMark, sizeof playerMark, 0);
-        
+        send(id, &move_rcvd, sizeof move_rcvd, 0);
+        send(id, &playerMark, sizeof playerMark, 0);
+        msg = "Make your turn ";
+        if(playerMark == 'X'){
+          msg+= 'O';
+        } else {
+          msg+='X';
+        }
+        if(id != id2){
+          send(id2, msg.c_str(), msg.length(), 0);
+          send(id2, &move_rcvd, sizeof move_rcvd, 0);
+          send(id2, &playerMark, sizeof playerMark, 0);
+        } else {
+          send(id1, msg.c_str(), msg.length(), 0);
+          send(id1, &move_rcvd, sizeof move_rcvd, 0);
+          send(id1, &playerMark, sizeof playerMark, 0);
+
+        }
         turn=(turn+1)%2;
         
     }
